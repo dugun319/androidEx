@@ -1,0 +1,16 @@
+0
+
+
+#SCRIPT_COMPILE_INFO
+{"EndTime":"2024-12-31 오전 10:55:18","IsScriptChanged":"False"}
+#SCRIPT_EDIT_SOURCE
+
+로그인을 누르면 다음 문장을 실행한다.
+{
+        오픈인증("Naver", "7nPyGM16HhSmJjNfmMxH", "7gL_n_3RAq", "http:/" + "/127.0.0.1")을 실행한다.
+}
+
+폼의 입력을 완료하면 다음 문단을 실행한다.(입력타입)
+{
+        입력란은 입력타입을 참조한다.
+}

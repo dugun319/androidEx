@@ -1,0 +1,14 @@
+0
+
+#SCRIPT_COMPILE_INFO
+{"EndTime":"2024-12-31 오후 4:03:18","IsScriptChanged":"False"}
+#SCRIPT_EDIT_SOURCE
+저장을 누르면 다음 문단을 실행한다.
+{
+        저장하기을 실행한다.
+}
+
+문단 저장하기
+{
+        DB처리문("일정추가")를 실행한다.
+}
