@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ExternalFunctionEnvironmentList xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <List>
+    <ExternalFunctionEnvironment>
+      <RegNumber>googlemap</RegNumber>
+      <ServiceName>googlemap</ServiceName>
+      <Address>maps.googleapis.com</Address>
+      <SServiceType>0</SServiceType>
+      <STransmitService>0</STransmitService>
+      <SRequestType>1</SRequestType>
+      <EncodingString>utf-8</EncodingString>
+      <SSendStructType>1</SSendStructType>
+      <SReceiveStructType>1</SReceiveStructType>
+      <URLEncoding>false</URLEncoding>
+      <OpenAPI>true</OpenAPI>
+      <Headers />
+      <EncodingHTML>false</EncodingHTML>
+    </ExternalFunctionEnvironment>
+  </List>
+</ExternalFunctionEnvironmentList>
