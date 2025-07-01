@@ -15,10 +15,13 @@ import androidx.compose.foundation.Image
 
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.shape.CircleShape
 
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -32,6 +35,7 @@ import com.khapp.strooptest.ui.theme.strooptestTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // 상단바 등 시스템 UI를 덮음
         enableEdgeToEdge()
         setContent {
             strooptestTheme {
@@ -41,6 +45,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// 앱의 진입지점
 @Composable
 fun MiniGamesApp() {
     val navController = rememberNavController()
@@ -51,133 +56,81 @@ fun MiniGamesApp() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("main") { MainScreen(navController) }
-            composable("game1") { DivScreen(navController, gameId = 1) }
-            composable("game2") { DivScreen(navController, gameId = 2) }
-            composable("game3") { DivScreen(navController, gameId = 3) }
-            composable("game4") { DivScreen(navController, gameId = 4) }
-            // 필요 시 레벨 선택 화면 등 추가
+            (1..4).forEach { gameId ->
+                composable("game${gameId}_main") { GameMainScreen(navController, gameId) }
+                // 게임화면 설명
+                composable("game${gameId}_screen_desc") { GameScreenDesc(navController, gameId) }
+                // 게임방법 설명
+                composable("game${gameId}_play_desc") { GamePlayDesc(navController, gameId) }
+                // 레벨선택 화면
+                (1..7).forEach { level ->
+                    composable("game${gameId}_level$level") {
+                        GameLevelScreen(
+                            navController,
+                            gameId,
+                            level
+                        )
+                    }
+                }
+            }
         }
     }
 }
 
+// 메인화면
 @Composable
 fun MainScreen(navController: NavController) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
+        Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Mini Games",
+            "Mini Games",
             style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 32.dp)
+            fontWeight = FontWeight.Bold
         )
-        Button(
-            onClick = { navController.navigate("game1") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
-        ) { Text("미니게임 1") }
-        Button(
-            onClick = { navController.navigate("game2") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
-        ) { Text("미니게임 2") }
-        Button(
-            onClick = { navController.navigate("game3") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
-        ) { Text("미니게임 3") }
-        Button(
-            onClick = { navController.navigate("game4") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
-        ) { Text("미니게임 4") }
-    }
-}
-
-@Composable
-fun DivScreen(navController: NavController, gameId: Int) {
-    when (gameId) {
-        1 -> GameID1(navController)
-        else -> DefaultGameScreen(gameId)
-    }
-}
-
-// gameId가 1일 때만 사용하는 함수
-@Composable
-fun GameID1(navController: NavController) {
-    val navControllerLocal = rememberNavController()
-    NavHost(
-        navController = navControllerLocal,
-        startDestination = "game1_main"
-    ) {
-        composable("game1_main") {
-            GameID1Main(navControllerLocal)
-        }
-        composable("game1_screen_desc") {
-            GameID1ScreenDesc(navControllerLocal)
-        }
-        composable("game1_play_desc") {
-            GameID1PlayDesc(navControllerLocal)
-        }
-    }
-}
-
-// gameId1 메인 (레벨, 설명 선택)
-@Composable
-fun GameID1Main(navController: NavController) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "미니게임 1",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 32.dp)
-        )
-        // 1~7 레벨 + 2개 설명 버튼 (총 9개)
-        val buttonTexts = listOf(
-            "레벨 1", "레벨 2", "레벨 3", "레벨 4", "레벨 5", "레벨 6", "레벨 7",
-            "게임화면설명", "게임방법설명",
-            "MainMenu"
-        )
-        buttonTexts.forEach { text ->
+        (1..4).forEach { gameId ->
             Button(
-                onClick = {
-                    when (text) {
-                        "게임화면설명" -> navController.navigate("game1_screen_desc")
-                        "게임방법설명" -> navController.navigate("game1_play_desc")
-                        "MainMenu" -> navController.navigate("mainMenu")
-                        else -> {
-                            // TODO: 레벨 선택 시 해당 레벨 게임 시작
-                        }
-                    }
-                },
+                onClick = { navController.navigate("game${gameId}_main") },
                 modifier = Modifier
-                    .fillMaxWidth(0.8f)
+                    .fillMaxWidth()
                     .padding(vertical = 8.dp)
-            ) {
-                Text(text)
-            }
-
+            ) { Text("미니게임 $gameId") }
         }
     }
 }
 
-// gameId1 게임화면설명 화면
+// 각 게임별 메인화면
 @Composable
-fun GameID1ScreenDesc(navController: NavController) {
+fun GameMainScreen(navController: NavController, gameId: Int) {
+    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+        Text("미니게임 $gameId", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        (1..7).forEach { level ->
+            Button(
+                onClick = { navController.navigate("game${gameId}_level$level") },
+                modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 4.dp)
+            ) { Text("레벨 $level") }
+        }
+        Button(
+            onClick = { navController.navigate("game${gameId}_screen_desc") },
+            modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 4.dp)
+        ) { Text("게임화면설명") }
+        Button(
+            onClick = { navController.navigate("game${gameId}_play_desc") },
+            modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 4.dp)
+        ) { Text("게임방법설명") }
+        Button(
+            onClick = { navController.navigate("main") },
+            modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 4.dp)
+        ) { Text("메인화면 돌아가기") }
+    }
+}
+
+// 게임화면 설명
+// gameId로 통제
+@Composable
+fun GameScreenDesc(navController: NavController, gameId: Int) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -206,9 +159,10 @@ fun GameID1ScreenDesc(navController: NavController) {
     }
 }
 
-// gameId1 게임방법설명 화면
+// 게임방법 설명
+// gameId로 통제
 @Composable
-fun GameID1PlayDesc(navController: NavController) {
+fun GamePlayDesc(navController: NavController, gameId: Int) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -237,27 +191,21 @@ fun GameID1PlayDesc(navController: NavController) {
     }
 }
 
-// gameId가 1이 아닐 때 기본 게임 화면
+//실제 게임 실행화면
 @Composable
-fun DefaultGameScreen(gameId: Int) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "Game $gameId",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
-        )
-        // TODO: 다른 게임 ID별로 추가 구현
-    }
-}
-
-@Composable
-fun GameScreen(navController: NavController, gameId: Int) {
-    var timeLeft by remember { mutableStateOf(120) } // 2분 = 120초
+fun GameLevelScreen(
+    navController: NavController,
+    gameId: Int,
+    level: Int
+) {
+    // 상태 변수들
+    var timeLeft by remember { mutableIntStateOf(120) }
     var isRunning by remember { mutableStateOf(false) }
+    var score by remember { mutableIntStateOf(0) }
+    var reactionTime by remember { mutableStateOf("--") }
+    var response by remember { mutableStateOf("Ready") }
+    var showImage by remember { mutableStateOf(false) }
+    var startTime by remember { mutableLongStateOf(0L) }
 
     // 타이머 로직
     LaunchedEffect(isRunning) {
@@ -267,55 +215,275 @@ fun GameScreen(navController: NavController, gameId: Int) {
                 timeLeft--
             }
             isRunning = false
+            // TODO: 게임 종료 처리
+        }
+    }
+
+    // 타이머 포맷
+    fun formatTime(sec: Int): String = String.format("%02d:%02d", sec / 60, sec % 60)
+
+    // Start 버튼 클릭
+    fun onStart() {
+        isRunning = true
+        timeLeft = 120
+        score = 0
+        reactionTime = "--"
+        response = "Go"
+        showImage = true
+        startTime = System.currentTimeMillis()
+    }
+
+    // Reset 버튼 클릭
+    fun onReset() {
+        isRunning = false
+        timeLeft = 120
+        score = 0
+        reactionTime = "--"
+        response = "Ready"
+        showImage = false
+        startTime = 0L
+    }
+
+    // 상단 2x4 그리드
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            // Column1 (RowSpan 4): 원형 타이머
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .weight(1f)
+                    .aspectRatio(1f)
+            ) {
+                // Circular Timer
+                CircularProgressIndicator(
+                    progress = { timeLeft / 120f },
+                    modifier = Modifier.size(120.dp),
+                    strokeWidth = 10.dp,
+                    color = Color.Blue,
+                    trackColor = Color.LightGray,
+                )
+                Text(
+                    text = formatTime(timeLeft),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            // Column2: 4 Row
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Row1: 버튼 2개
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Button(
+                        onClick = { onStart() },
+                        enabled = !isRunning
+                    ) { Text("Start") }
+                    Button(
+                        onClick = { onReset() }
+                    ) { Text("Reset") }
+                }
+                // Row2: 점수
+                Text(
+                    text = "점수: $score",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(top = 12.dp)
+                )
+                // Row3: 반응시간
+                Text(
+                    text = "반응시간: $reactionTime ms",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(top = 12.dp)
+                )
+                // Row4: Response
+                Text(
+                    text = "Response: $response",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(top = 12.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // RuleGrid: 중앙 이미지와 하단 버튼 사이에 배치
+        RuleGrid(
+            rule1 = "규칙 1",
+            rule2 = "규칙 2",
+            photoResId = R.drawable.sample_game_image,
+            meaning = "의미",
+            text = "글자",
+            color = Color.Red,
+            isGameMode = isRunning,
+            showImage = showImage
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+        // 중앙: 게임 이미지 표시
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
+            if (showImage) {
+                // 예시 이미지, 실제 리소스에 맞게 교체
+                Image(
+                    painter = painterResource(id = R.drawable.sample_game_image),
+                    contentDescription = "Game Stimulus",
+                    modifier = Modifier.size(180.dp)
+                )
+            }
+        }
+    }
+}
+
+// 규칙표시
+@Composable
+fun RuleGrid(
+    rule1: String,
+    rule2: String,
+    photoResId: Int,
+    meaning: String,
+    text: String,
+    color: Color,
+    isGameMode: Boolean,
+    showImage: Boolean
+) {
+    // 게임 모드 랜덤 표시 상태
+    var showPhotoOrMeaning by remember { mutableStateOf(true) } // true: 사진, false: 의미
+    var showTextOrColor by remember { mutableStateOf(true) }    // true: 글자, false: 색상
+
+    // 이미지가 새로 출력될 때마다 랜덤 갱신
+    LaunchedEffect(showImage) {
+        if (isGameMode && showImage) {
+            showPhotoOrMeaning = (0..1).random() == 0
+            showTextOrColor = (0..1).random() == 0
         }
     }
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
     ) {
-        Text(
-            text = "Game $gameId",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.padding(vertical = 16.dp)
-        ) {
-            CircularProgressIndicator(
-                progress = timeLeft / 120f,
-                modifier = Modifier.size(140.dp),
-                strokeWidth = 10.dp
+        // 1행: 규칙1, 규칙2
+        Row(Modifier.fillMaxWidth()) {
+            Text(
+                text = rule1,
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center
             )
             Text(
-                text = String.format("%02d:%02d", timeLeft / 60, timeLeft % 60),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
+                text = rule2,
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center
             )
         }
-        Row(
-            modifier = Modifier
-                .padding(top = 16.dp)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Button(
-                onClick = { isRunning = true },
-                enabled = !isRunning && timeLeft > 0
-            ) { Text("Start") }
-            Button(
-                onClick = {
-                    isRunning = false
-                    timeLeft = 120
-                    // 점수/반응시간 등 초기화 추가
-                }
-            ) { Text("Reset") }
+        Spacer(modifier = Modifier.height(8.dp))
+        // 2행: 사진 or 의미
+        Row(Modifier.fillMaxWidth()) {
+            if (!isGameMode || (isGameMode && showPhotoOrMeaning)) {
+                // 사진
+                Image(
+                    painter = painterResource(id = photoResId),
+                    contentDescription = "사진",
+                    modifier = Modifier
+                        .weight(1f)
+                        .size(60.dp)
+                        .align(Alignment.CenterVertically)
+                )
+            } else {
+                // 의미
+                Text(
+                    text = meaning,
+                    modifier = Modifier
+                        .weight(1f)
+                        .align(Alignment.CenterVertically),
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            if (!isGameMode || (isGameMode && !showPhotoOrMeaning)) {
+                // 의미
+                Text(
+                    text = meaning,
+                    modifier = Modifier
+                        .weight(1f)
+                        .align(Alignment.CenterVertically),
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
+            } else {
+                // 사진
+                Image(
+                    painter = painterResource(id = photoResId),
+                    contentDescription = "사진",
+                    modifier = Modifier
+                        .weight(1f)
+                        .size(60.dp)
+                        .align(Alignment.CenterVertically)
+                )
+            }
         }
-        // 이하 규칙, 메인자극, 반응버튼 등 UI 추가 예정
+        Spacer(modifier = Modifier.height(8.dp))
+        // 3행: 글자 or 색상
+        Row(Modifier.fillMaxWidth()) {
+            if (!isGameMode || (isGameMode && showTextOrColor)) {
+                // 글자
+                Text(
+                    text = text,
+                    modifier = Modifier
+                        .weight(1f)
+                        .align(Alignment.CenterVertically),
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center
+                )
+            } else {
+                // 색상
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .size(40.dp)
+                        .background(color, shape = CircleShape)
+                        .align(Alignment.CenterVertically)
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            if (!isGameMode || (isGameMode && !showTextOrColor)) {
+                // 색상
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .size(40.dp)
+                        .background(color, shape = CircleShape)
+                        .align(Alignment.CenterVertically)
+                )
+            } else {
+                // 글자
+                Text(
+                    text = text,
+                    modifier = Modifier
+                        .weight(1f)
+                        .align(Alignment.CenterVertically),
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
     }
 }
 
@@ -331,6 +499,6 @@ fun MainScreenPreview() {
 @Composable
 fun GameScreenPreview() {
     strooptestTheme {
-        DivScreen(navController = rememberNavController(), gameId = 1)
+        GameMainScreen(navController = rememberNavController(), gameId = 1)
     }
 }
