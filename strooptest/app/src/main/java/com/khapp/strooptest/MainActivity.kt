@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.BorderStroke
 
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -13,6 +14,7 @@ import androidx.compose.runtime.*
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.shape.RoundedCornerShape
 
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,22 +83,70 @@ fun MiniGamesApp() {
 @Composable
 fun MainScreen(navController: NavController) {
     Column(
-        Modifier.fillMaxSize(),
+        Modifier
+            .fillMaxSize()
+            .padding(top = 32.dp, bottom = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(
-            "Mini Games",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
+        // 상단 300x300 이미지
+        Image(
+            painter = painterResource(id = R.drawable.main_page_image),
+            contentDescription = "메인 이미지",
+            modifier = Modifier.size(350.dp)
         )
-        (1..4).forEach { gameId ->
-            Button(
-                onClick = { navController.navigate("game${gameId}_main") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            ) { Text("미니게임 $gameId") }
+
+        // 2x2 버튼 그리드
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(50.dp)
+        ) {
+            (0..1).forEach { row ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    (1..2).forEach { col ->
+                        val gameId = row * 2 + col
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            val gameName = when (gameId) {
+                                1 -> "Stroop"
+                                2 -> "StroopFruit"
+                                3 -> "MoleGame"
+                                4 -> "RockScissorsPapers"
+                                else -> "미니게임 $gameId"
+                            }
+
+                            Text(gameName)
+                            Button(
+                                onClick = { navController.navigate("game${gameId}_main") },
+                                modifier = Modifier.size(150.dp),
+                                shape = RoundedCornerShape(24.dp), // 둥근 사각형
+                                contentPadding = PaddingValues(0.dp), // 이미지 stretch
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.White // 배경색 흰색
+                                ),
+                                border = BorderStroke(3.dp, Color(0xFF001970)), // 파란색 계열 테두리
+                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
+                            ) {
+                                Image(
+                                    painter = painterResource(id = when (gameId) {
+                                        1 -> R.drawable.button_image_1
+                                        2 -> R.drawable.button_image_2
+                                        3 -> R.drawable.button_image_3
+                                        4 -> R.drawable.button_image_4
+                                        else -> R.drawable.button_image_1
+                                    }),
+                                    contentDescription = "미니게임 $gameId 이미지",
+                                    modifier = Modifier.size(150.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

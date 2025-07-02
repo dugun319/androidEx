@@ -6,11 +6,12 @@ plugins {
 
 android {
     namespace = "com.khapp.strooptest"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.khapp.strooptest"
         minSdk = 26
+        //noinspection OldTargetApi
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
