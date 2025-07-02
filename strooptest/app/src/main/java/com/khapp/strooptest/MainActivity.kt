@@ -1,6 +1,8 @@
 package com.khapp.strooptest
 
+import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -10,7 +12,6 @@ import androidx.compose.runtime.*
 
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
 
 import androidx.compose.ui.Alignment
@@ -21,7 +22,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.foundation.shape.CircleShape
 
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -104,25 +104,41 @@ fun MainScreen(navController: NavController) {
 // 각 게임별 메인화면
 @Composable
 fun GameMainScreen(navController: NavController, gameId: Int) {
-    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Text("미니게임 $gameId", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+    Column(
+        Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            "미니게임 $gameId",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold
+        )
         (1..7).forEach { level ->
             Button(
                 onClick = { navController.navigate("game${gameId}_level$level") },
-                modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 4.dp)
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .padding(vertical = 4.dp)
             ) { Text("레벨 $level") }
         }
         Button(
             onClick = { navController.navigate("game${gameId}_screen_desc") },
-            modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 4.dp)
+            modifier = Modifier
+                .fillMaxWidth(0.8f)
+                .padding(vertical = 4.dp)
         ) { Text("게임화면설명") }
         Button(
             onClick = { navController.navigate("game${gameId}_play_desc") },
-            modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 4.dp)
+            modifier = Modifier
+                .fillMaxWidth(0.8f)
+                .padding(vertical = 4.dp)
         ) { Text("게임방법설명") }
         Button(
             onClick = { navController.navigate("main") },
-            modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 4.dp)
+            modifier = Modifier
+                .fillMaxWidth(0.8f)
+                .padding(vertical = 4.dp)
         ) { Text("메인화면 돌아가기") }
     }
 }
@@ -205,7 +221,11 @@ fun GameLevelScreen(
     var reactionTime by remember { mutableStateOf("--") }
     var response by remember { mutableStateOf("Ready") }
     var showImage by remember { mutableStateOf(false) }
+    var showButtons by remember { mutableStateOf(false) }
     var startTime by remember { mutableLongStateOf(0L) }
+    var currentAnswerKey by remember { mutableIntStateOf(-1) } // 정답키 저장
+    var answerKeyReceived by remember { mutableIntStateOf(-1) } // 정답키 저장 여부
+    var roundId by remember { mutableIntStateOf(0) } // 라운드 구분
 
     // 타이머 로직
     LaunchedEffect(isRunning) {
@@ -220,7 +240,17 @@ fun GameLevelScreen(
     }
 
     // 타이머 포맷
+    @SuppressLint("DefaultLocale")
     fun formatTime(sec: Int): String = String.format("%02d:%02d", sec / 60, sec % 60)
+
+    // 라운드 시작 함수
+    fun startNewRound() {
+        showImage = true
+        showButtons = false
+        startTime = System.currentTimeMillis()
+        roundId++
+        currentAnswerKey = -1
+    }
 
     // Start 버튼 클릭
     fun onStart() {
@@ -229,8 +259,8 @@ fun GameLevelScreen(
         score = 0
         reactionTime = "--"
         response = "Go"
-        showImage = true
         startTime = System.currentTimeMillis()
+        startNewRound()
     }
 
     // Reset 버튼 클릭
@@ -242,6 +272,25 @@ fun GameLevelScreen(
         response = "Ready"
         showImage = false
         startTime = 0L
+        showButtons = false
+        currentAnswerKey = -1
+        answerKeyReceived = -1
+        roundId = 0
+    }
+
+
+    // RuleGrid에서 answerKey를 받아 처리
+    fun onAnswerKeyChanged(answerKey: Int) {
+        currentAnswerKey = answerKey
+        answerKeyReceived = answerKey // 상태만 변경
+        showButtons = false           // 버튼은 일단 숨김
+    }
+
+    LaunchedEffect(answerKeyReceived, isRunning, roundId) {
+        if (isRunning && answerKeyReceived != -1) {
+            delay(1000L)
+            showButtons = true
+        }
     }
 
     // 상단 2x4 그리드
@@ -253,19 +302,17 @@ fun GameLevelScreen(
         Row(
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Column1 (RowSpan 4): 원형 타이머
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .weight(1f)
                     .aspectRatio(1f)
             ) {
-                // Circular Timer
                 CircularProgressIndicator(
                     progress = { timeLeft / 120f },
                     modifier = Modifier.size(120.dp),
-                    strokeWidth = 10.dp,
                     color = Color.Blue,
+                    strokeWidth = 10.dp,
                     trackColor = Color.LightGray,
                 )
                 Text(
@@ -275,61 +322,41 @@ fun GameLevelScreen(
                 )
             }
             Spacer(modifier = Modifier.width(16.dp))
-            // Column2: 4 Row
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // Row1: 버튼 2개
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Button(
-                        onClick = { onStart() },
-                        enabled = !isRunning
-                    ) { Text("Start") }
-                    Button(
-                        onClick = { onReset() }
-                    ) { Text("Reset") }
+                    Button(onClick = { onStart() }, enabled = !isRunning) { Text("Start") }
+                    Button(onClick = { onReset() }) { Text("Reset") }
                 }
-                // Row2: 점수
-                Text(
-                    text = "점수: $score",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(top = 12.dp)
-                )
-                // Row3: 반응시간
-                Text(
-                    text = "반응시간: $reactionTime ms",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(top = 12.dp)
-                )
-                // Row4: Response
-                Text(
-                    text = "Response: $response",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(top = 12.dp)
-                )
+                Text("점수: $score", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 12.dp))
+                Text("반응시간: $reactionTime ms", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 12.dp))
+                Text("Response: $response", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 12.dp))
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // RuleGrid: 중앙 이미지와 하단 버튼 사이에 배치
+        // RuleGrid에 answerKey 콜백 전달
         RuleGrid(
-            rule1 = "규칙 1",
-            rule2 = "규칙 2",
-            photoResId = R.drawable.sample_game_image,
+            rule1 = "규칙1",
+            rule2 = "규칙2",
+            roundId = roundId,
+            picture = "사진",
             meaning = "의미",
             text = "글자",
-            color = Color.Red,
+            color = "색상",
             isGameMode = isRunning,
-            showImage = showImage
+            onAnswerKeyChanged = { key -> onAnswerKeyChanged(key) }
         )
 
         Spacer(modifier = Modifier.height(24.dp))
-        // 중앙: 게임 이미지 표시
+
+        // 중앙 이미지 또는 "+" 표시
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
@@ -337,12 +364,53 @@ fun GameLevelScreen(
                 .weight(1f)
         ) {
             if (showImage) {
-                // 예시 이미지, 실제 리소스에 맞게 교체
-                Image(
-                    painter = painterResource(id = R.drawable.sample_game_image),
-                    contentDescription = "Game Stimulus",
-                    modifier = Modifier.size(180.dp)
-                )
+                if (showButtons) {
+                    Text(
+                        text = "+",
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.sample_game_image),
+                        contentDescription = "Game Stimulus",
+                        modifier = Modifier.size(180.dp)
+                    )
+                }
+            }
+        }
+
+        // 버튼 3개 표시 (정답 맞추기용)
+        if (showButtons) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                // 예시 버튼들: 정답 후보 3개 (숫자, 텍스트 등 자유롭게 변경 가능)
+                listOf(0, 1, 2).forEach { choice ->
+                    Button(onClick = {
+                        val endTime = System.currentTimeMillis()
+                        val elapsed = endTime - startTime
+                        if (choice == currentAnswerKey) {
+                            score += 10
+                            reactionTime = elapsed.toString()
+                            response = "Correct!"
+                        } else {
+                            response = "Wrong!"
+                        }
+                        // 시간 남아있으면 다음 라운드로 자동 진행!
+                        if (timeLeft > 0 && isRunning) {
+                            startNewRound()
+                        } else {
+                            showButtons = false
+                            showImage = false
+                        }
+                    }) {
+                        Text("선택 $choice")
+                    }
+                }
             }
         }
     }
@@ -353,23 +421,29 @@ fun GameLevelScreen(
 fun RuleGrid(
     rule1: String,
     rule2: String,
-    photoResId: Int,
+    roundId: Int,
+    picture: String,
     meaning: String,
     text: String,
-    color: Color,
+    color: String, // 색상 이름을 String으로 받음
     isGameMode: Boolean,
-    showImage: Boolean
+    onAnswerKeyChanged: (Int) -> Unit
 ) {
-    // 게임 모드 랜덤 표시 상태
-    var showPhotoOrMeaning by remember { mutableStateOf(true) } // true: 사진, false: 의미
-    var showTextOrColor by remember { mutableStateOf(true) }    // true: 글자, false: 색상
+    // 규칙1: 0=글자, 1=사진
+    var rule1Type by remember { mutableIntStateOf(0) }
+    // 규칙2: 0=의미, 1=색상
+    var rule2Type by remember { mutableIntStateOf(0) }
 
-    // 이미지가 새로 출력될 때마다 랜덤 갱신
-    LaunchedEffect(showImage) {
-        if (isGameMode && showImage) {
-            showPhotoOrMeaning = (0..1).random() == 0
-            showTextOrColor = (0..1).random() == 0
+    // 게임 모드일 때만 랜덤으로 결정
+    LaunchedEffect(isGameMode, roundId) {
+        if (isGameMode) {
+            rule1Type = (0..1).random()
+            rule2Type = (0..1).random()
+        } else {
+            rule1Type = 0
+            rule2Type = 0
         }
+        onAnswerKeyChanged(rule1Type + rule2Type)
     }
 
     Column(
@@ -393,99 +467,30 @@ fun RuleGrid(
             )
         }
         Spacer(modifier = Modifier.height(8.dp))
-        // 2행: 사진 or 의미
+        // 2행: 규칙1(글자/사진), 규칙2(의미/색상)
         Row(Modifier.fillMaxWidth()) {
-            if (!isGameMode || (isGameMode && showPhotoOrMeaning)) {
-                // 사진
-                Image(
-                    painter = painterResource(id = photoResId),
-                    contentDescription = "사진",
-                    modifier = Modifier
-                        .weight(1f)
-                        .size(60.dp)
-                        .align(Alignment.CenterVertically)
-                )
-            } else {
-                // 의미
-                Text(
-                    text = meaning,
-                    modifier = Modifier
-                        .weight(1f)
-                        .align(Alignment.CenterVertically),
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            if (!isGameMode || (isGameMode && !showPhotoOrMeaning)) {
-                // 의미
-                Text(
-                    text = meaning,
-                    modifier = Modifier
-                        .weight(1f)
-                        .align(Alignment.CenterVertically),
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center
-                )
-            } else {
-                // 사진
-                Image(
-                    painter = painterResource(id = photoResId),
-                    contentDescription = "사진",
-                    modifier = Modifier
-                        .weight(1f)
-                        .size(60.dp)
-                        .align(Alignment.CenterVertically)
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        // 3행: 글자 or 색상
-        Row(Modifier.fillMaxWidth()) {
-            if (!isGameMode || (isGameMode && showTextOrColor)) {
-                // 글자
-                Text(
-                    text = text,
-                    modifier = Modifier
-                        .weight(1f)
-                        .align(Alignment.CenterVertically),
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center
-                )
-            } else {
-                // 색상
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .size(40.dp)
-                        .background(color, shape = CircleShape)
-                        .align(Alignment.CenterVertically)
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            if (!isGameMode || (isGameMode && !showTextOrColor)) {
-                // 색상
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .size(40.dp)
-                        .background(color, shape = CircleShape)
-                        .align(Alignment.CenterVertically)
-                )
-            } else {
-                // 글자
-                Text(
-                    text = text,
-                    modifier = Modifier
-                        .weight(1f)
-                        .align(Alignment.CenterVertically),
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center
-                )
-            }
+            // 규칙1: 글자 또는 사진
+            Text(
+                text = if (rule1Type == 0) text else picture,
+                modifier = Modifier
+                    .weight(1f)
+                    .align(Alignment.CenterVertically),
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center
+            )
+            // 규칙2: 의미 또는 색상
+            Text(
+                text = if (rule2Type == 0) meaning else color,
+                modifier = Modifier
+                    .weight(1f)
+                    .align(Alignment.CenterVertically),
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
+
 
 @Preview(showBackground = true)
 @Composable
