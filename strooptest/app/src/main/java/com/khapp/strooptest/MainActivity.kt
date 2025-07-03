@@ -463,6 +463,23 @@ fun GameLevelScreen(
                 }
             }
         }
+
+        // 게임 메인으로 돌아가는 버튼
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(
+            onClick = {
+                // 현재 게임의 메인화면으로 이동
+                navController.navigate("game${gameId}_main") {
+                    // 현재 스크린을 백스택에서 제거 (뒤로가기 했을 때 다시 이 화면이 나오지 않게)
+                    popUpTo("game${gameId}_main") { inclusive = true }
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+        ) {
+            Text("게임 메인으로")
+        }
     }
 }
 
