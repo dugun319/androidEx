@@ -5,7 +5,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.BorderStroke
 
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -31,6 +30,8 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+
+import android.util.Log
 
 import kotlinx.coroutines.delay
 
@@ -155,12 +156,12 @@ fun MainScreen(navController: NavController) {
         }
         // 오른쪽 아래 고정 이미지 추가
         Image(
-            painter = painterResource(id = R.drawable.your_image), // 실제 리소스 ID로 교체
+            painter = painterResource(id = R.drawable.bottmlogo), // 실제 리소스 ID로 교체
             contentDescription = "오른쪽 아래 이미지",
             modifier = Modifier
                 .size(width = 250.dp, height = 100.dp)
                 .align(Alignment.BottomEnd)
-                .padding(16.dp) // 화면 끝에서 16dp 띄움
+                .padding(end = 8.dp, bottom = 16.dp) // 화면 끝에서 16dp 띄움
         )
     }
 }
@@ -287,8 +288,13 @@ fun GameLevelScreen(
     var showImage by remember { mutableStateOf(false) }
     var showButtons by remember { mutableStateOf(false) }
     var startTime by remember { mutableLongStateOf(0L) }
-    var currentAnswerKey by remember { mutableIntStateOf(-1) } // 정답키 저장
-    var answerKeyReceived by remember { mutableIntStateOf(-1) } // 정답키 저장 여부
+
+    //정답 키 관리
+    var currentAnswerKey by remember { mutableIntStateOf(-1) }
+    var randomIndex by remember { mutableIntStateOf(1) }
+    var correctAnswerKey by remember { mutableIntStateOf(0) }
+
+    // roundId가 증가하면 규칙이 변경됨
     var roundId by remember { mutableIntStateOf(0) } // 라운드 구분
     var currentStimulusResId by remember { mutableIntStateOf(R.drawable.st_01) }  // 자극 이미지 리소스 ID
     var rule1Type by remember { mutableIntStateOf(0) }
@@ -318,31 +324,117 @@ fun GameLevelScreen(
         roundId++
         currentAnswerKey = -1
 
+        // 0 : text, 1 : picture
+        rule1Type = when (gameId) {
+            1 -> 0
+            2 -> (0..1).random()
+            3 -> 1
+            else -> {
+                0
+            }
+        }
+
+        // gameId == 1 or 2, 0 : meaning, 1 : color
+        // gameId == 3, 0 -> "이기기", 1 -> "비기기", 2 -> "지기"
+        rule2Type = when (gameId) {
+            1, 2 -> (0..1).random()
+            3 -> (0..2).random()
+            else -> {
+                0
+            }
+        }
+
+        // 가위바위보 정답용 Array
+        // randomIndex: 1~3, rule2Type: 0~2
+        val answerTable = arrayOf(
+            // rule2Type == 0
+            arrayOf(2, 0, 1),
+            // rule2Type == 1
+            arrayOf(0, 1, 2),
+            // rule2Type == 2
+            arrayOf(1, 2, 0)
+        )
+
+        when (gameId) {
+            // 0 : meaning, 1 : color
+            1 -> {
+                randomIndex = (1..16).random()
+                correctAnswerKey = if (rule2Type == 0) {
+                    when (randomIndex % 4) {
+                        1 -> 0
+                        2 -> 1
+                        3 -> 2
+                        0 -> 3
+                        else -> 0 // 예외 방지
+                    }
+                } else {
+                    ((randomIndex - 1) / 4) % 4
+                }
+            }
+
+            // 0 : text, 1 : picture
+            // 0 : meaning, 1 : color
+            2 -> {
+                randomIndex = (1..64).random()
+                correctAnswerKey = if (rule1Type == 0) {
+                    if (rule2Type == 0) {
+                        when (randomIndex % 4) {
+                            1 -> 0
+                            2 -> 1
+                            3 -> 2
+                            0 -> 3
+                            else -> 0 // 예외 방지
+                        }
+                    } else {
+                        ((randomIndex - 1) / 4) % 4
+                    }
+                } else {
+                    ((randomIndex - 1) / 16) % 4
+                }
+            }
+
+
+            // 0: 이기기, 1: 비기기, 2: 지기
+            // 3번 케이스
+            3 -> {
+                randomIndex = (1..3).random()
+                correctAnswerKey = if (rule2Type in 0..2 && randomIndex in 1..3) {
+                    answerTable[rule2Type][randomIndex - 1]
+                } else {
+                    0
+                }
+            }
+
+            4 -> {
+                randomIndex = (1..9).random()
+            }
+        }
+
         currentStimulusResId = when (gameId) {
             1 -> {
-                val randomIndex = (1..16).random()
                 val resName = "st_%02d".format(randomIndex)
                 val resId = navController.context.resources.getIdentifier(
                     resName, "drawable", navController.context.packageName
                 )
                 if (resId != 0) resId else R.drawable.st_01
             }
+
             2 -> {
-                val randomIndex = (1..64).random()
                 val resName = "fr_%02d".format(randomIndex)
                 val resId = navController.context.resources.getIdentifier(
                     resName, "drawable", navController.context.packageName
                 )
                 if (resId != 0) resId else R.drawable.fr_01
             }
+
             3 -> {
-                val randomIndex = (1..3).random()
                 val resName = "rsp_%02d".format(randomIndex)
                 val resId = navController.context.resources.getIdentifier(
                     resName, "drawable", navController.context.packageName
                 )
                 if (resId != 0) resId else R.drawable.rsp_01
             }
+
             else -> R.drawable.sample_game_image
         }
     }
@@ -369,22 +461,11 @@ fun GameLevelScreen(
         startTime = 0L
         showButtons = false
         currentAnswerKey = -1
-        answerKeyReceived = -1
         roundId = 0
     }
 
-
-    // RuleGrid에서 answerKey와 rule1Type, rule2Type 받아오기
-    fun onAnswerKeyChanged(answerKey: Int, rule1: Int, rule2: Int) {
-        currentAnswerKey = answerKey
-        answerKeyReceived = answerKey
-        rule1Type = rule1
-        rule2Type = rule2
-        showButtons = false
-    }
-
-    LaunchedEffect(answerKeyReceived, isRunning, roundId) {
-        if (isRunning && answerKeyReceived != -1) {
+    LaunchedEffect(roundId) {
+        if (isRunning) {
             delay(1000L)
             showButtons = true
         }
@@ -399,7 +480,8 @@ fun GameLevelScreen(
                 .padding(start = 8.dp, end = 8.dp, top = 50.dp)
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .height(180.dp)
             ) {
                 Box(
@@ -488,7 +570,6 @@ fun GameLevelScreen(
                 }
             }
 
-            // RuleGrid에 answerKey 콜백 전달
             RuleGrid(
                 rule1 = "규칙1",
                 rule2 = "규칙2",
@@ -498,8 +579,9 @@ fun GameLevelScreen(
                 text = "글자",
                 color = "색상",
                 isGameMode = isRunning,
-                onAnswerKeyChanged = { key, r1, r2 -> onAnswerKeyChanged(key, r1, r2) },
                 gameId = gameId,
+                rule1Type = rule1Type,
+                rule2Type = rule2Type,
             )
 
             // 중앙 이미지 또는 "+" 표시
@@ -545,7 +627,8 @@ fun GameLevelScreen(
                 when (gameId) {
                     1 -> {
                         // 색상 원형 버튼 4개
-                        val colorList = listOf(Color.Red, Color.Green, Color.Blue, Color.Yellow)
+                        val darkGreen = Color(0xFF006400)
+                        val colorList = listOf(Color.Red, darkGreen, Color.Blue, Color.Yellow)
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -557,7 +640,13 @@ fun GameLevelScreen(
                                     onClick = {
                                         val endTime = System.currentTimeMillis()
                                         val elapsed = endTime - startTime
-                                        if (idx == currentAnswerKey) {
+
+                                        Log.d(
+                                            "GameLevelScreen",
+                                            "Button Clicked idx: $idx, correctAnswerKey: $correctAnswerKey"
+                                        )
+
+                                        if (idx == correctAnswerKey) {
                                             score += 10
                                             reactionTime = elapsed.toString()
                                             response = "Correct!"
@@ -599,7 +688,7 @@ fun GameLevelScreen(
                                     onClick = {
                                         val endTime = System.currentTimeMillis()
                                         val elapsed = endTime - startTime
-                                        if (idx == currentAnswerKey) {
+                                        if (idx == correctAnswerKey) {
                                             score += 10
                                             reactionTime = elapsed.toString()
                                             response = "Correct!"
@@ -653,7 +742,7 @@ fun GameLevelScreen(
                                     onClick = {
                                         val endTime = System.currentTimeMillis()
                                         val elapsed = endTime - startTime
-                                        if (idx == currentAnswerKey) {
+                                        if (idx == correctAnswerKey) {
                                             score += 10
                                             reactionTime = elapsed.toString()
                                             response = "Correct!"
@@ -711,6 +800,8 @@ fun GameLevelScreen(
 // 규칙표시
 @Composable
 fun RuleGrid(
+    rule1Type: Int,
+    rule2Type: Int,
     rule1: String,
     rule2: String,
     roundId: Int,
@@ -719,47 +810,11 @@ fun RuleGrid(
     text: String,
     color: String, // 색상 이름을 String으로 받음
     isGameMode: Boolean,
-    onAnswerKeyChanged: (Int, Int, Int) -> Unit,
     gameId: Int,
 ) {
-    // 규칙1: 0=글자, 1=사진
-    var rule1Type by remember { mutableIntStateOf(0) }
-    // 규칙2: 0=의미, 1=색상
-    var rule2Type by remember { mutableIntStateOf(0) }
 
     // gameId=4면 Grid 숨김
     if (gameId == 4) return
-
-    // 게임 모드일 때만 랜덤으로 결정
-    // 게임 모드일 때만 랜덤/고정 결정
-    LaunchedEffect(isGameMode, roundId, gameId) {
-        if (isGameMode) {
-            when (gameId) {
-                1 -> {
-                    rule1Type = 0 // 고정
-                    rule2Type = (0..1).random()
-                }
-                2 -> {
-                    rule1Type = (0..1).random()
-                    rule2Type = (0..1).random()
-                }
-                3 -> {
-                    rule1Type = 1 // 고정
-                    rule2Type = (0..2).random()
-                }
-                else -> {
-                    rule1Type = 0
-                    rule2Type = 0
-                }
-            }
-        } else {
-            // 게임모드가 아니면 기본값(설명 등)
-            rule1Type = 0
-            rule2Type = 0
-        }
-        // 정답키 생성 방식도 gameId별로 다르게 하고 싶으면 아래 부분 수정
-        onAnswerKeyChanged(rule1Type + rule2Type, rule1Type, rule2Type)
-    }
 
     // RuleGrid FontStyle
     val myHeaderTextStyle = TextStyle(
@@ -814,6 +869,7 @@ fun RuleGrid(
                         2 -> "지기"
                         else -> ""
                     }
+
                     else -> when (rule2Type) {
                         0 -> meaning
                         1 -> color
