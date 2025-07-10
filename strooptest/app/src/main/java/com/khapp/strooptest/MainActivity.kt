@@ -32,10 +32,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 
 import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 
 import kotlinx.coroutines.delay
 
 import com.khapp.strooptest.ui.theme.strooptestTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,9 +70,14 @@ fun MiniGamesApp() {
             (1..4).forEach { gameId ->
                 composable("game${gameId}_main") { GameMainScreen(navController, gameId) }
                 // 게임화면 설명
-                composable("game${gameId}_screen_desc") { GameScreenDesc(navController, gameId) }
-                // 게임방법 설명
-                composable("game${gameId}_play_desc") { GamePlayDesc(navController, gameId) }
+                composable("GameScreenDesc/{gameId}") { backStackEntry ->
+                    val gameId = backStackEntry.arguments?.getString("gameId")?.toIntOrNull() ?: 1
+                    GameScreenDesc(navController, gameId)
+                }
+                composable("GamePlayDesc/{gameId}") { backStackEntry ->
+                    val gameId = backStackEntry.arguments?.getString("gameId")?.toIntOrNull() ?: 1
+                    GamePlayDesc(navController, gameId)
+                }
                 // 레벨선택 화면
                 (1..7).forEach { level ->
                     composable("game${gameId}_level$level") {
@@ -85,7 +96,11 @@ fun MiniGamesApp() {
 // 메인화면
 @Composable
 fun MainScreen(navController: NavController) {
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
         Column(
             Modifier
                 .fillMaxSize()
@@ -122,8 +137,9 @@ fun MainScreen(navController: NavController) {
                                     4 -> "MoleGame"
                                     else -> "미니게임 $gameId"
                                 }
+                                // 게임 이름이 필요하면 넣지만 필요 없을 듯 함.
+                                // Text(gameName)
 
-                                Text(gameName)
                                 Button(
                                     onClick = { navController.navigate("game${gameId}_main") },
                                     modifier = Modifier.size(150.dp),
@@ -159,7 +175,7 @@ fun MainScreen(navController: NavController) {
             painter = painterResource(id = R.drawable.bottmlogo), // 실제 리소스 ID로 교체
             contentDescription = "오른쪽 아래 이미지",
             modifier = Modifier
-                .size(width = 250.dp, height = 100.dp)
+                .size(width = 250.dp, height = 80.dp)
                 .align(Alignment.BottomEnd)
                 .padding(end = 8.dp, bottom = 16.dp) // 화면 끝에서 16dp 띄움
         )
@@ -169,44 +185,143 @@ fun MainScreen(navController: NavController) {
 // 각 게임별 메인화면
 @Composable
 fun GameMainScreen(navController: NavController, gameId: Int) {
-    Column(
-        Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White) // 완전 흰색 지정
     ) {
-        Text(
-            "미니게임 $gameId",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
+        // 상단 좌측 게임 이미지
+        Image(
+            painter = painterResource(id = getGameImageRes(gameId)),
+            contentDescription = null,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(24.dp)
+                .size(200.dp)
+                .clip(RoundedCornerShape(20.dp))
         )
-        (1..7).forEach { level ->
-            Button(
-                onClick = { navController.navigate("game${gameId}_level$level") },
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .padding(vertical = 4.dp)
-            ) { Text("레벨 $level") }
+
+        // 중앙 3x3 그리드 버튼
+        Column(
+            Modifier
+                .align(Alignment.Center)
+                .padding(top = 32.dp, bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            for (row in 0 until 3) {
+                Row(
+                    Modifier,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    for (col in 0 until 3) {
+                        val index = row * 3 + col
+                        when (index) {
+                            in 0..6 -> {
+                                LevelImageButton(
+                                    level = index + 1,
+                                    navController = navController,
+                                    gameId = gameId
+                                )
+                            }
+
+                            7 -> DescTextButton(
+                                text = "screen",
+                                onClick = { navController.navigate("GameScreenDesc/$gameId") }
+                            )
+
+                            8 -> DescTextButton(
+                                text = "play",
+                                onClick = { navController.navigate("GamePlayDesc/$gameId") }
+                            )
+                        }
+
+                        if (col < 2) Spacer(Modifier.width(16.dp))
+                    }
+
+                }
+                if (row < 2) Spacer(Modifier.height(16.dp))
+            }
         }
-        Button(
-            onClick = { navController.navigate("game${gameId}_screen_desc") },
-            modifier = Modifier
-                .fillMaxWidth(0.8f)
-                .padding(vertical = 4.dp)
-        ) { Text("게임화면설명") }
-        Button(
-            onClick = { navController.navigate("game${gameId}_play_desc") },
-            modifier = Modifier
-                .fillMaxWidth(0.8f)
-                .padding(vertical = 4.dp)
-        ) { Text("게임방법설명") }
+
+        // 하단 우측 메인화면 돌아가기 버튼
         Button(
             onClick = { navController.navigate("main") },
+            shape = RoundedCornerShape(20.dp),
             modifier = Modifier
-                .fillMaxWidth(0.8f)
-                .padding(vertical = 4.dp)
-        ) { Text("메인화면 돌아가기") }
+                .align(Alignment.BottomEnd)
+                .padding(24.dp)
+                .size(width = 120.dp, height = 80.dp),
+            contentPadding = PaddingValues(0.dp), // 이미지 stretch
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.back_to_main),
+                contentDescription = "메인화면으로 돌아가기",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.FillBounds,
+            )
+        }
     }
 }
+
+@Composable
+fun LevelImageButton(level: Int, navController: NavController, gameId: Int) {
+    Button(
+        onClick = { navController.navigate("game${gameId}_level$level") },
+        shape = RoundedCornerShape(20.dp),
+        modifier = Modifier.size(90.dp),
+        contentPadding = PaddingValues(0.dp), // 이미지 stretch
+    ) {
+        Image(
+            painter = painterResource(id = getLevelImageRes(level)),
+            contentDescription = "레벨 $level",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.FillBounds,
+        )
+    }
+}
+
+@Composable
+fun DescTextButton(text: String, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        shape = RoundedCornerShape(20.dp),
+        modifier = Modifier.size(90.dp),
+        contentPadding = PaddingValues(0.dp), // 이미지 stretch
+    ) {
+        val buttonImageRes = when (text) {
+            "screen" -> R.drawable.screen_desc
+            "play" -> R.drawable.play_desc
+            else -> R.drawable.screen_desc
+        }
+        Image(
+            painter = painterResource(id = buttonImageRes),
+            contentDescription = "",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.FillBounds,
+        )
+    }
+}
+
+// 리소스 매핑 함수 예시
+fun getGameImageRes(gameId: Int): Int = when (gameId) {
+    1 -> R.drawable.button_image_1
+    2 -> R.drawable.button_image_2
+    3 -> R.drawable.button_image_3
+    4 -> R.drawable.button_image_4
+    else -> R.drawable.button_image_1
+}
+
+fun getLevelImageRes(level: Int): Int = when (level) {
+    1 -> R.drawable.level_1
+    2 -> R.drawable.level_2
+    3 -> R.drawable.level_3
+    4 -> R.drawable.level_4
+    5 -> R.drawable.level_5
+    6 -> R.drawable.level_6
+    7 -> R.drawable.level_7
+    else -> R.drawable.level_1
+}
+
 
 // 게임화면 설명
 // gameId로 통제
@@ -216,26 +331,104 @@ fun GameScreenDesc(navController: NavController, gameId: Int) {
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
+            .background(Color.White)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Top
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.game_ui_1),
-                contentDescription = "게임화면설명",
-                modifier = Modifier.size(200.dp)
-            )
-            Text("설명", modifier = Modifier.padding(top = 16.dp))
+            // 첫 번째 이미지를 Row로 감싸서 왼쪽 정렬
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val resName = "title_$gameId"
+                val context = LocalContext.current
+                val resId =
+                    context.resources.getIdentifier(resName, "drawable", context.packageName)
+
+                Image(
+                    painter = painterResource(id = if (resId != 0) resId else R.drawable.screen_desc_1),
+                    contentDescription = "게임화면설명",
+                    modifier = Modifier
+                        .size(150.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                )
+
+                Spacer(modifier = Modifier.width(30.dp)) // 그림과 텍스트 사이 간격
+                if(gameId != 4) {
+                    Text(
+                        text = "게임화면설명",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 25.sp,
+                    )
+                }else {
+                    Text(
+                        text = "두더지 게임을 즐기세요",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                    )
+                }
+            }
+
+            if(gameId != 4) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally // 가운데 정렬(필요시)
+                ) {
+                    Image(
+                        painter = painterResource(
+                            id = when (gameId) {
+                                1 -> R.drawable.screen_desc_11
+                                2 -> R.drawable.screen_desc_21
+                                3 -> R.drawable.screen_desc_31
+                                else -> R.drawable.screen_desc_1
+                            }
+                        ),
+                        contentDescription = "게임화면설명1",
+                        modifier = Modifier
+                            .size(300.dp)
+                            .padding(top = 20.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Image(
+                        painter = painterResource(
+                            id = when (gameId) {
+                                1 -> R.drawable.screen_desc_12
+                                2 -> R.drawable.screen_desc_22
+                                3 -> R.drawable.screen_desc_32
+                                else -> R.drawable.screen_desc_1
+                            }
+                        ),
+                        contentDescription = "게임화면설명2",
+                        modifier = Modifier
+                            .size(300.dp)
+                            .padding(top = 0.dp)
+                    )
+                }
+            }
         }
+
+        // 하단 우측 메인화면 돌아가기 버튼
         Button(
             onClick = { navController.popBackStack() },
+            shape = RoundedCornerShape(20.dp),
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(16.dp)
+                .padding(bottom = 10.dp)
+                .size(width = 120.dp, height = 80.dp),
+            contentPadding = PaddingValues(0.dp), // 이미지 stretch
         ) {
-            Text("메인으로")
+            Image(
+                painter = painterResource(id = R.drawable.back_to_main),
+                contentDescription = "메인화면으로 돌아가기",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.FillBounds,
+            )
         }
     }
 }
@@ -248,26 +441,105 @@ fun GamePlayDesc(navController: NavController, gameId: Int) {
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
+            .background(Color.White)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Top
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.gameplay_description_1),
-                contentDescription = "게임방법설명",
-                modifier = Modifier.size(200.dp)
-            )
-            Text("설명", modifier = Modifier.padding(top = 16.dp))
+            // 첫 번째 이미지를 Row로 감싸서 왼쪽 정렬
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val resName = "title_$gameId"
+                val context = LocalContext.current
+                val resId =
+                    context.resources.getIdentifier(resName, "drawable", context.packageName)
+
+                Image(
+                    painter = painterResource(id = if (resId != 0) resId else R.drawable.screen_desc_1),
+                    contentDescription = "게임방법설명",
+                    modifier = Modifier
+                        .size(150.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                )
+
+                Spacer(modifier = Modifier.width(30.dp)) // 그림과 텍스트 사이 간격
+                if(gameId != 4) {
+                    Text(
+                        text = "게임방법설명",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 25.sp,
+                    )
+                }else {
+                    Text(
+                        text = "두더지 게임을 즐기세요",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                    )
+                }
+            }
+
+            if(gameId != 4) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally // 가운데 정렬(필요시)
+                ) {
+                    Image(
+                        painter = painterResource(
+                            id = when (gameId) {
+                                1 -> R.drawable.play_desc11
+                                2 -> R.drawable.play_desc21
+                                3 -> R.drawable.play_desc31
+                                else -> R.drawable.play_desc_1
+                            }
+                        ),
+                        contentDescription = "게임방법설명1",
+                        modifier = Modifier
+                            .size(300.dp)
+                            .padding(top = 20.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Image(
+                        painter = painterResource(
+                            id = when (gameId) {
+                                1 -> R.drawable.play_desc12
+                                2 -> R.drawable.play_desc22
+                                3 -> R.drawable.play_desc32
+                                else -> R.drawable.play_desc_1
+                            }
+                        ),
+                        contentDescription = "게임방법설명2",
+                        modifier = Modifier
+                            .size(300.dp)
+                            .padding(top = 0.dp)
+                    )
+                }
+            }
         }
+
+
+        // 하단 우측 메인화면 돌아가기 버튼
         Button(
             onClick = { navController.popBackStack() },
+            shape = RoundedCornerShape(20.dp),
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(16.dp)
+                .padding(bottom = 10.dp)
+                .size(width = 120.dp, height = 80.dp),
+            contentPadding = PaddingValues(0.dp), // 이미지 stretch
         ) {
-            Text("메인으로")
+            Image(
+                painter = painterResource(id = R.drawable.back_to_main),
+                contentDescription = "메인화면으로 돌아가기",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.FillBounds,
+            )
         }
     }
 }
@@ -300,6 +572,43 @@ fun GameLevelScreen(
     var rule1Type by remember { mutableIntStateOf(0) }
     var rule2Type by remember { mutableIntStateOf(0) }
 
+    // 두더지 게임 전용 상태
+    var moleIndex by remember { mutableIntStateOf(-1) } // 활성화된 두더지 인덱스(0~8)
+    var moleState by remember { mutableStateOf("idle") } // "idle", "active", "hit", "miss"
+    var moleStartTime by remember { mutableLongStateOf(0L) }
+
+    var isGameOver by remember { mutableStateOf(false) }
+
+    // Level-dependent stimulus exposure duration
+    val delayAccordingToLevel =
+        if(gameId != 4) {
+            when (level) {
+                1 -> 5000L
+                2 -> 4000L
+                3 -> 3000L
+                4 -> 2000L
+                5 -> 1000L
+                6 -> 750L
+                7 -> 500L
+                else -> {
+                    10000L
+                }
+            }
+        }else{
+            when (level) {
+                1 -> 3000L
+                2 -> 2500L
+                3 -> 2000L
+                4 -> 1500L
+                5 -> 1000L
+                6 -> 800L
+                7 -> 600L
+                else -> {
+                    1000L
+                }
+            }
+        }
+
     // 타이머 로직
     LaunchedEffect(isRunning) {
         if (isRunning) {
@@ -308,6 +617,8 @@ fun GameLevelScreen(
                 timeLeft--
             }
             isRunning = false
+            isGameOver = true
+            showButtons = false
             // TODO: 게임 종료 처리
         }
     }
@@ -318,7 +629,8 @@ fun GameLevelScreen(
 
     // 라운드 시작 함수
     fun startNewRound() {
-        showImage = true
+        // gameId가 4면 false, 나머지는 모두 true
+        showImage = gameId != 4
         showButtons = false
         startTime = System.currentTimeMillis()
         roundId++
@@ -407,6 +719,7 @@ fun GameLevelScreen(
 
             4 -> {
                 randomIndex = (1..9).random()
+                showButtons = true
             }
         }
 
@@ -439,6 +752,54 @@ fun GameLevelScreen(
         }
     }
 
+    fun startMoleRound() {
+        moleIndex = (0..8).random()
+        moleState = "active"
+        moleStartTime = System.currentTimeMillis()
+    }
+
+    val effectDealy = 750L
+    val coroutineScope = rememberCoroutineScope()
+
+    fun proceedToNextRoundAfterDelay(state: String) {
+        coroutineScope.launch {
+            delay(effectDealy)
+            moleState = "idle"
+            delay(effectDealy)
+            if (timeLeft > 0 && isRunning) {
+                roundId++
+            }
+        }
+    }
+
+    // 두더지 클릭 처리
+    fun onMoleClick(idx: Int) {
+        if (moleState == "active" && idx == moleIndex) {
+            val elapsed = System.currentTimeMillis() - moleStartTime
+            moleState = "hit"
+            score += 10
+            reactionTime = elapsed.toString()
+            response = "Correct!"
+            proceedToNextRoundAfterDelay("hit")
+        }
+    }
+
+    // 두더지 게임은 onStart에서 시작하지 않고 여기서 시작
+    // 라운드 시작 및 miss 처리
+    LaunchedEffect(roundId, isRunning) {
+        if (isRunning && gameId == 4) {
+            startMoleRound()
+            delay(delayAccordingToLevel)
+            if (moleState == "active") {
+                moleState = "miss"
+                response = "Miss!"
+                reactionTime = "--"
+                proceedToNextRoundAfterDelay("miss")
+            }
+        }
+    }
+
+
     // Start 버튼 클릭
     fun onStart() {
         isRunning = true
@@ -447,7 +808,10 @@ fun GameLevelScreen(
         reactionTime = "--"
         response = "Go"
         startTime = System.currentTimeMillis()
-        startNewRound()
+        if (gameId != 4) {
+            startNewRound()
+        }
+        isGameOver = false
     }
 
     // Reset 버튼 클릭
@@ -462,17 +826,26 @@ fun GameLevelScreen(
         showButtons = false
         currentAnswerKey = -1
         roundId = 0
+        isGameOver = false
     }
 
     LaunchedEffect(roundId) {
         if (isRunning) {
-            delay(1000L)
-            showButtons = true
+            if (gameId != 4) {
+                delay(delayAccordingToLevel)
+                showButtons = true
+            }
         }
     }
 
+    // 진한초록색, 원형스크롤 타이머, 버튼에 사용
+    val darkGreen = Color(0xFF006400)
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
         // 상단 2x4 그리드
         Column(
             modifier = Modifier
@@ -493,7 +866,7 @@ fun GameLevelScreen(
                     CircularProgressIndicator(
                         progress = { timeLeft / 120f },
                         modifier = Modifier.size(120.dp),
-                        color = Color.Blue,
+                        color = darkGreen,
                         strokeWidth = 10.dp,
                         trackColor = Color.LightGray,
                     )
@@ -555,79 +928,86 @@ fun GameLevelScreen(
                     Text(
                         "점수: $score",
                         style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(top = 8.dp)
+                        modifier = Modifier.padding(top = 8.dp),
+                        fontWeight = FontWeight.SemiBold,
                     )
                     Text(
                         "반응시간: $reactionTime ms",
                         style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(top = 8.dp)
+                        modifier = Modifier.padding(top = 8.dp),
+                        fontWeight = FontWeight.SemiBold,
                     )
                     Text(
                         "Response: $response",
                         style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(top = 8.dp)
+                        modifier = Modifier.padding(top = 8.dp),
+                        fontWeight = FontWeight.SemiBold,
                     )
                 }
             }
 
-            RuleGrid(
-                rule1 = "규칙1",
-                rule2 = "규칙2",
-                roundId = roundId,
-                picture = "사진",
-                meaning = "의미",
-                text = "글자",
-                color = "색상",
-                isGameMode = isRunning,
-                gameId = gameId,
-                rule1Type = rule1Type,
-                rule2Type = rule2Type,
-            )
+            if (gameId != 4) {
+                RuleGrid(
+                    rule1 = "규칙1",
+                    rule2 = "규칙2",
+                    roundId = roundId,
+                    picture = "사진",
+                    meaning = "의미",
+                    text = "글자",
+                    color = "색상",
+                    isGameMode = isRunning,
+                    gameId = gameId,
+                    rule1Type = rule1Type,
+                    rule2Type = rule2Type,
+                )
 
-            // 중앙 이미지 또는 "+" 표시
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(370.dp)
-            ) {
-                if (showImage) {
-                    if (showButtons) {
-                        Text(
-                            text = "+",
-                            style = MaterialTheme.typography.headlineLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                    } else {
-                        when (gameId) {
-                            1, 2, 3 -> Image(
-                                painter = painterResource(id = currentStimulusResId),
-                                contentDescription = "Game Stimulus",
+                // 중앙 이미지 또는 "+" 표시
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(370.dp)
+                ) {
+                    when {
+                        isGameOver -> {
+                            Image(
+                                painter = painterResource(id = R.drawable.gameover),
+                                contentDescription = "Game Over",
                                 modifier = Modifier.size(350.dp)
                             )
+                        }
 
-                            else -> Image(
-                                painter = painterResource(id = R.drawable.sample_game_image),
-                                contentDescription = "Game Stimulus",
-                                modifier = Modifier.size(350.dp)
-                            )
+                        showImage -> {
+                            if (showButtons) {
+                                Text(
+                                    text = "+",
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            } else {
+                                when (gameId) {
+                                    1, 2, 3 -> Image(
+                                        painter = painterResource(id = currentStimulusResId),
+                                        contentDescription = "Game Stimulus",
+                                        modifier = Modifier.size(350.dp)
+                                    )
+
+                                    else -> Image(
+                                        painter = painterResource(id = R.drawable.sample_game_image),
+                                        contentDescription = "Game Stimulus",
+                                        modifier = Modifier.size(350.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
             }
 
-            fun getButtonCount(gameId: Int): Int = when (gameId) {
-                1, 2 -> 4
-                3 -> 4
-                4 -> 9
-                else -> 4
-            }
-
-            if (showButtons) {
+            if (showButtons && !isGameOver) {
                 when (gameId) {
                     1 -> {
                         // 색상 원형 버튼 4개
-                        val darkGreen = Color(0xFF006400)
                         val colorList = listOf(Color.Red, darkGreen, Color.Blue, Color.Yellow)
                         Row(
                             modifier = Modifier
@@ -639,12 +1019,7 @@ fun GameLevelScreen(
                                 Button(
                                     onClick = {
                                         val endTime = System.currentTimeMillis()
-                                        val elapsed = endTime - startTime
-
-                                        Log.d(
-                                            "GameLevelScreen",
-                                            "Button Clicked idx: $idx, correctAnswerKey: $correctAnswerKey"
-                                        )
+                                        val elapsed = endTime - startTime - delayAccordingToLevel
 
                                         if (idx == correctAnswerKey) {
                                             score += 10
@@ -660,7 +1035,7 @@ fun GameLevelScreen(
                                             showImage = false
                                         }
                                     },
-                                    modifier = Modifier.size(64.dp),
+                                    modifier = Modifier.size(90.dp),
                                     shape = CircleShape,
                                     colors = ButtonDefaults.buttonColors(containerColor = color)
                                 ) {}
@@ -676,7 +1051,8 @@ fun GameLevelScreen(
                             R.drawable.button_b,
                             R.drawable.button_y
                         )
-                        val buttonColors = listOf(Color.Red, Color.Green, Color.Blue, Color.Yellow)
+
+                        val buttonColors = listOf(Color.Red, darkGreen, Color.Blue, Color.Yellow)
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -687,7 +1063,7 @@ fun GameLevelScreen(
                                 Button(
                                     onClick = {
                                         val endTime = System.currentTimeMillis()
-                                        val elapsed = endTime - startTime
+                                        val elapsed = endTime - startTime - delayAccordingToLevel
                                         if (idx == correctAnswerKey) {
                                             score += 10
                                             reactionTime = elapsed.toString()
@@ -702,7 +1078,7 @@ fun GameLevelScreen(
                                             showImage = false
                                         }
                                     },
-                                    modifier = Modifier.size(64.dp),
+                                    modifier = Modifier.size(90.dp),
                                     shape = CircleShape,
                                     contentPadding = PaddingValues(0.dp), // 버튼 내부 패딩 제거
                                     colors = if (rule2Type == 1) {
@@ -716,7 +1092,7 @@ fun GameLevelScreen(
                                         Image(
                                             painter = painterResource(id = buttonImages[idx]),
                                             contentDescription = null,
-                                            modifier = Modifier.size(64.dp)
+                                            modifier = Modifier.size(90.dp)
                                         )
                                     }
                                 }
@@ -741,7 +1117,7 @@ fun GameLevelScreen(
                                 Button(
                                     onClick = {
                                         val endTime = System.currentTimeMillis()
-                                        val elapsed = endTime - startTime
+                                        val elapsed = endTime - startTime - delayAccordingToLevel
                                         if (idx == correctAnswerKey) {
                                             score += 10
                                             reactionTime = elapsed.toString()
@@ -756,46 +1132,102 @@ fun GameLevelScreen(
                                             showImage = false
                                         }
                                     },
-                                    modifier = Modifier.size(64.dp),
+                                    modifier = Modifier.size(120.dp),
                                     shape = CircleShape,
                                     contentPadding = PaddingValues(0.dp) // 버튼 내부 패딩 제거 (이미지 꽉 차게)
                                 ) {
                                     Image(
                                         painter = painterResource(id = buttonImages[idx]),
                                         contentDescription = null,
-                                        modifier = Modifier.size(64.dp) // 버튼보다 약간 작게
+                                        modifier = Modifier.size(120.dp)
                                     )
                                 }
                             }
                         }
                     }
+                }
+            }
 
-                    4 -> {
-                        // 예시: 두더지 게임 등 추가 게임 분기
-                        // ... gameId 4에 맞는 버튼 레이아웃 ...
+            if (gameId == 4) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(bottom = 180.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isGameOver) {
+                        Image(
+                            painter = painterResource(id = R.drawable.gameover),
+                            contentDescription = "Game Over",
+                            modifier = Modifier.size(350.dp)
+                        )
+                    } else {
+                        Column(
+                            modifier = Modifier
+                                .width(320.dp)
+                                .height(320.dp)
+                        ) {
+                            for (row in 0..2) {
+                                Row(
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    for (col in 0..2) {
+                                        val idx = row * 3 + col
+                                        Button(
+                                            onClick = { onMoleClick(idx) },
+                                            enabled = (moleState == "active" && idx == moleIndex),
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .aspectRatio(1f)
+                                                .padding(2.dp),
+                                            shape = RectangleShape,
+                                            contentPadding = PaddingValues(0.dp)
+                                        ) {
+                                            val imageRes = when {
+                                                moleState == "hit" && idx == moleIndex -> R.drawable.mole_hit
+                                                moleState == "miss" && idx == moleIndex -> R.drawable.mole_miss
+                                                moleState == "active" && idx == moleIndex -> R.drawable.mole_active
+                                                else -> R.drawable.mole_idle
+                                            }
+                                            Image(
+                                                painter = painterResource(id = imageRes),
+                                                contentDescription = null,
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
 
-        // 게임 메인으로 돌아가는 버튼
-        Button(
-            onClick = {
-                // 현재 게임의 메인화면으로 이동
-                navController.navigate("game${gameId}_main") {
-                    // 현재 스크린을 백스택에서 제거 (뒤로가기 했을 때 다시 이 화면이 나오지 않게)
-                    popUpTo("game${gameId}_main") { inclusive = true }
-                }
-            },
-            modifier = Modifier
-                .align(Alignment.BottomEnd) // 오른쪽 하단에 고정
-                .padding(24.dp)             // 화면 끝에서 24dp 띄움
-                .width(180.dp)              // 원하는 너비 지정
-        ) {
-            Text("게임 메인으로")
+
+        // 하단 우측 메인화면 돌아가기 버튼
+        if (!isRunning) {
+            Button(
+                onClick = { navController.navigate("main") },
+                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(24.dp)
+                    .size(width = 120.dp, height = 80.dp),
+                contentPadding = PaddingValues(0.dp), // 이미지 stretch
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.back_to_main),
+                    contentDescription = "메인화면으로 돌아가기",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.FillBounds,
+                )
+            }
         }
     }
 }
+
 
 // 규칙표시
 @Composable
