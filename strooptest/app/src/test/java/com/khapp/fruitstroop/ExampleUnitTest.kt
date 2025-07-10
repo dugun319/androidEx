@@ -1,4 +1,4 @@
-package com.khapp.strooptest
+package com.khapp.fruitstroop
 
 import org.junit.Test
 

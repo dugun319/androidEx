@@ -1,4 +1,4 @@
-package com.khapp.strooptest.ui.theme
+package com.khapp.fruitstroop.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

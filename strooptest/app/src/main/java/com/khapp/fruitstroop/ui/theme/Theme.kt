@@ -1,6 +1,5 @@
-package com.khapp.strooptest.ui.theme
+package com.khapp.fruitstroop.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme

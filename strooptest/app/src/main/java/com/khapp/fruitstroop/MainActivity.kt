@@ -1,4 +1,4 @@
-package com.khapp.strooptest
+package com.khapp.fruitstroop
 
 import android.annotation.SuppressLint
 import android.os.Bundle
@@ -31,7 +31,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
@@ -40,7 +39,7 @@ import androidx.compose.ui.platform.LocalContext
 
 import kotlinx.coroutines.delay
 
-import com.khapp.strooptest.ui.theme.strooptestTheme
+import com.khapp.fruitstroop.ui.theme.strooptestTheme
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -214,8 +213,7 @@ fun GameMainScreen(navController: NavController, gameId: Int) {
                     horizontalArrangement = Arrangement.Center
                 ) {
                     for (col in 0 until 3) {
-                        val index = row * 3 + col
-                        when (index) {
+                        when (val index = row * 3 + col) {
                             in 0..6 -> {
                                 LevelImageButton(
                                     level = index + 1,

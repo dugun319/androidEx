@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.khapp.strooptest"
+    namespace = "com.khapp.fruitstroop"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.khapp.strooptest"
+        applicationId = "com.khapp.fruitstroop"
         minSdk = 26
         //noinspection OldTargetApi
         targetSdk = 35
