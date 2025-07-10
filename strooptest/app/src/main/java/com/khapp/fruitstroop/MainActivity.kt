@@ -32,6 +32,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
@@ -371,41 +374,25 @@ fun GameScreenDesc(navController: NavController, gameId: Int) {
                 }
             }
 
+            val resName = "screen_desc_$gameId"
+            val context = LocalContext.current
+            val resId =
+                context.resources.getIdentifier(resName, "drawable", context.packageName)
+
             if(gameId != 4) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally // 가운데 정렬(필요시)
+                Box(
+                    modifier = Modifier
+                        .width(400.dp) // 원하는 박스 크기
+                        .height(550.dp)
+                        .horizontalScroll(rememberScrollState())
+                        .verticalScroll(rememberScrollState())
                 ) {
                     Image(
-                        painter = painterResource(
-                            id = when (gameId) {
-                                1 -> R.drawable.screen_desc_11
-                                2 -> R.drawable.screen_desc_21
-                                3 -> R.drawable.screen_desc_31
-                                else -> R.drawable.screen_desc_1
-                            }
-                        ),
-                        contentDescription = "게임화면설명1",
+                        painter = painterResource(id = if (resId != 0) resId else R.drawable.screen_desc_1),
+                        contentDescription = "스크롤 이미지",
                         modifier = Modifier
-                            .size(300.dp)
-                            .padding(top = 20.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Image(
-                        painter = painterResource(
-                            id = when (gameId) {
-                                1 -> R.drawable.screen_desc_12
-                                2 -> R.drawable.screen_desc_22
-                                3 -> R.drawable.screen_desc_32
-                                else -> R.drawable.screen_desc_1
-                            }
-                        ),
-                        contentDescription = "게임화면설명2",
-                        modifier = Modifier
-                            .size(300.dp)
-                            .padding(top = 0.dp)
+                            .width(600.dp)
+                            .height(1200.dp)
                     )
                 }
             }
@@ -481,41 +468,25 @@ fun GamePlayDesc(navController: NavController, gameId: Int) {
                 }
             }
 
+            val resName = "play_desc_$gameId"
+            val context = LocalContext.current
+            val resId =
+                context.resources.getIdentifier(resName, "drawable", context.packageName)
+
             if(gameId != 4) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally // 가운데 정렬(필요시)
+                Box(
+                    modifier = Modifier
+                        .width(400.dp) // 원하는 박스 크기
+                        .height(550.dp)
+                        .horizontalScroll(rememberScrollState())
+                        .verticalScroll(rememberScrollState())
                 ) {
                     Image(
-                        painter = painterResource(
-                            id = when (gameId) {
-                                1 -> R.drawable.play_desc11
-                                2 -> R.drawable.play_desc21
-                                3 -> R.drawable.play_desc31
-                                else -> R.drawable.play_desc_1
-                            }
-                        ),
-                        contentDescription = "게임방법설명1",
+                        painter = painterResource(id = if (resId != 0) resId else R.drawable.play_desc_1),
+                        contentDescription = "스크롤 이미지",
                         modifier = Modifier
-                            .size(300.dp)
-                            .padding(top = 20.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Image(
-                        painter = painterResource(
-                            id = when (gameId) {
-                                1 -> R.drawable.play_desc12
-                                2 -> R.drawable.play_desc22
-                                3 -> R.drawable.play_desc32
-                                else -> R.drawable.play_desc_1
-                            }
-                        ),
-                        contentDescription = "게임방법설명2",
-                        modifier = Modifier
-                            .size(300.dp)
-                            .padding(top = 0.dp)
+                            .width(600.dp)
+                            .height(1200.dp)
                     )
                 }
             }
