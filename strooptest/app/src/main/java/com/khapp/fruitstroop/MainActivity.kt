@@ -9,7 +9,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.shape.CircleShape
@@ -39,6 +38,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 
 import kotlinx.coroutines.delay
 
@@ -132,16 +133,6 @@ fun MainScreen(navController: NavController) {
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                val gameName = when (gameId) {
-                                    1 -> "Stroop"
-                                    2 -> "StroopFruit"
-                                    3 -> "RockScissorsPapers"
-                                    4 -> "MoleGame"
-                                    else -> "미니게임 $gameId"
-                                }
-                                // 게임 이름이 필요하면 넣지만 필요 없을 듯 함.
-                                // Text(gameName)
-
                                 Button(
                                     onClick = { navController.navigate("game${gameId}_main") },
                                     modifier = Modifier.size(150.dp),
@@ -172,15 +163,6 @@ fun MainScreen(navController: NavController) {
                 }
             }
         }
-        // 오른쪽 아래 고정 이미지 추가
-        Image(
-            painter = painterResource(id = R.drawable.bottmlogo), // 실제 리소스 ID로 교체
-            contentDescription = "오른쪽 아래 이미지",
-            modifier = Modifier
-                .size(width = 250.dp, height = 80.dp)
-                .align(Alignment.BottomEnd)
-                .padding(end = 8.dp, bottom = 16.dp) // 화면 끝에서 16dp 띄움
-        )
     }
 }
 
@@ -328,82 +310,82 @@ fun getLevelImageRes(level: Int): Int = when (level) {
 // gameId로 통제
 @Composable
 fun GameScreenDesc(navController: NavController, gameId: Int) {
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
-            .background(Color.White)
+            .background(Color.White),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
+        // 첫 번째 이미지를 Row로 감싸서 왼쪽 정렬
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // 첫 번째 이미지를 Row로 감싸서 왼쪽 정렬
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                val resName = "title_$gameId"
-                val context = LocalContext.current
-                val resId =
-                    context.resources.getIdentifier(resName, "drawable", context.packageName)
-
-                Image(
-                    painter = painterResource(id = if (resId != 0) resId else R.drawable.screen_desc_1),
-                    contentDescription = "게임화면설명",
-                    modifier = Modifier
-                        .size(150.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                )
-
-                Spacer(modifier = Modifier.width(30.dp)) // 그림과 텍스트 사이 간격
-                if(gameId != 4) {
-                    Text(
-                        text = "게임화면설명",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 25.sp,
-                    )
-                }else {
-                    Text(
-                        text = "두더지 게임을 즐기세요",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                    )
-                }
-            }
-
-            val resName = "screen_desc_$gameId"
+            val resName = "title_$gameId"
             val context = LocalContext.current
             val resId =
                 context.resources.getIdentifier(resName, "drawable", context.packageName)
 
-            if(gameId != 4) {
-                Box(
-                    modifier = Modifier
-                        .width(400.dp) // 원하는 박스 크기
-                        .height(550.dp)
-                        .horizontalScroll(rememberScrollState())
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    Image(
-                        painter = painterResource(id = if (resId != 0) resId else R.drawable.screen_desc_1),
-                        contentDescription = "스크롤 이미지",
-                        modifier = Modifier
-                            .width(600.dp)
-                            .height(1200.dp)
-                    )
-                }
+            Image(
+                painter = painterResource(id = if (resId != 0) resId else R.drawable.screen_desc_1),
+                contentDescription = "게임화면설명",
+                modifier = Modifier
+                    .size(150.dp)
+                    .clip(RoundedCornerShape(20.dp))
+            )
+
+            Spacer(modifier = Modifier.width(30.dp)) // 그림과 텍스트 사이 간격
+            if (gameId != 4) {
+                Text(
+                    text = "게임화면설명",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 25.sp,
+                    color = Color.Black,
+                )
+            } else {
+                Text(
+                    text = "두더지 게임을 즐기세요",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = Color.Black,
+                )
             }
         }
+
+        Spacer(modifier = Modifier.height(8.dp)) // 상단과 중간 이미지 사이 간격
+
+        val resName = "screen_desc_$gameId"
+        val context = LocalContext.current
+        val resId =
+            context.resources.getIdentifier(resName, "drawable", context.packageName)
+
+        if (gameId != 4) {
+            Box(
+                modifier = Modifier
+                    .weight(1f) // 남은 공간 모두 사용
+                    .horizontalScroll(rememberScrollState())
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Image(
+                    painter = painterResource(id = if (resId != 0) resId else R.drawable.screen_desc_1),
+                    contentDescription = "스크롤 이미지",
+                    modifier = Modifier
+                        .height(720.dp)
+                        .width(960.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp)) // 상단과 중간 이미지 사이 간격
 
         // 하단 우측 메인화면 돌아가기 버튼
         Button(
             onClick = { navController.popBackStack() },
             shape = RoundedCornerShape(20.dp),
             modifier = Modifier
-                .align(Alignment.BottomEnd)
+                .align(Alignment.End)
                 .padding(bottom = 10.dp)
                 .size(width = 120.dp, height = 80.dp),
             contentPadding = PaddingValues(0.dp), // 이미지 stretch
@@ -418,87 +400,87 @@ fun GameScreenDesc(navController: NavController, gameId: Int) {
     }
 }
 
+
 // 게임방법 설명
 // gameId로 통제
 @Composable
 fun GamePlayDesc(navController: NavController, gameId: Int) {
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
-            .background(Color.White)
+            .background(Color.White),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
+        // 첫 번째 이미지를 Row로 감싸서 왼쪽 정렬
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // 첫 번째 이미지를 Row로 감싸서 왼쪽 정렬
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                val resName = "title_$gameId"
-                val context = LocalContext.current
-                val resId =
-                    context.resources.getIdentifier(resName, "drawable", context.packageName)
-
-                Image(
-                    painter = painterResource(id = if (resId != 0) resId else R.drawable.screen_desc_1),
-                    contentDescription = "게임방법설명",
-                    modifier = Modifier
-                        .size(150.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                )
-
-                Spacer(modifier = Modifier.width(30.dp)) // 그림과 텍스트 사이 간격
-                if(gameId != 4) {
-                    Text(
-                        text = "게임방법설명",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 25.sp,
-                    )
-                }else {
-                    Text(
-                        text = "두더지 게임을 즐기세요",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                    )
-                }
-            }
-
-            val resName = "play_desc_$gameId"
+            val resName = "title_$gameId"
             val context = LocalContext.current
             val resId =
                 context.resources.getIdentifier(resName, "drawable", context.packageName)
 
-            if(gameId != 4) {
-                Box(
-                    modifier = Modifier
-                        .width(400.dp) // 원하는 박스 크기
-                        .height(550.dp)
-                        .horizontalScroll(rememberScrollState())
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    Image(
-                        painter = painterResource(id = if (resId != 0) resId else R.drawable.play_desc_1),
-                        contentDescription = "스크롤 이미지",
-                        modifier = Modifier
-                            .width(600.dp)
-                            .height(1200.dp)
-                    )
-                }
+            Image(
+                painter = painterResource(id = if (resId != 0) resId else R.drawable.screen_desc_1),
+                contentDescription = "게임방법설명",
+                modifier = Modifier
+                    .size(150.dp)
+                    .clip(RoundedCornerShape(20.dp))
+            )
+
+            Spacer(modifier = Modifier.width(30.dp)) // 그림과 텍스트 사이 간격
+            if (gameId != 4) {
+                Text(
+                    text = "게임방법설명",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 25.sp,
+                    color = Color.Black,
+                )
+            } else {
+                Text(
+                    text = "두더지 게임을 즐기세요",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = Color.Black,
+                )
             }
         }
 
+        Spacer(modifier = Modifier.height(8.dp)) // 상단과 중간 이미지 사이 간격
+
+        val resName = "play_desc_$gameId"
+        val context = LocalContext.current
+        val resId =
+            context.resources.getIdentifier(resName, "drawable", context.packageName)
+
+        if (gameId != 4) {
+            Box(
+                modifier = Modifier
+                    .weight(1f) // 남은 공간 모두 사용
+                    .horizontalScroll(rememberScrollState())
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Image(
+                    painter = painterResource(id = if (resId != 0) resId else R.drawable.play_desc_1),
+                    contentDescription = "스크롤 이미지",
+                    modifier = Modifier
+                        .height(720.dp)
+                        .width(960.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp)) // 상단과 중간 이미지 사이 간격
 
         // 하단 우측 메인화면 돌아가기 버튼
         Button(
             onClick = { navController.popBackStack() },
             shape = RoundedCornerShape(20.dp),
             modifier = Modifier
-                .align(Alignment.BottomEnd)
+                .align(Alignment.End)
                 .padding(bottom = 10.dp)
                 .size(width = 120.dp, height = 80.dp),
             contentPadding = PaddingValues(0.dp), // 이미지 stretch
@@ -550,7 +532,7 @@ fun GameLevelScreen(
 
     // Level-dependent stimulus exposure duration
     val delayAccordingToLevel =
-        if(gameId != 4) {
+        if (gameId != 4) {
             when (level) {
                 1 -> 5000L
                 2 -> 4000L
@@ -563,7 +545,7 @@ fun GameLevelScreen(
                     10000L
                 }
             }
-        }else{
+        } else {
             when (level) {
                 1 -> 3000L
                 2 -> 2500L
@@ -842,7 +824,8 @@ fun GameLevelScreen(
                     Text(
                         text = formatTime(timeLeft),
                         style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black,
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
@@ -854,10 +837,6 @@ fun GameLevelScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        val buttonImages = listOf(
-                            R.drawable.button_start,
-                            R.drawable.button_reset,
-                        )
                         Button(
                             onClick = { onStart() },
                             enabled = !isRunning,
@@ -894,23 +873,31 @@ fun GameLevelScreen(
                             )
                         }
                     }
+
+                    val informationTextStyle = TextStyle(
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.Black,
+                        lineHeight = 24.sp,
+                        letterSpacing = 0.15.sp,
+                        fontFamily = FontFamily.Default,
+                        fontStyle = FontStyle.Normal,
+                    )
+
                     Text(
                         "점수: $score",
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = informationTextStyle,
                         modifier = Modifier.padding(top = 8.dp),
-                        fontWeight = FontWeight.SemiBold,
                     )
                     Text(
                         "반응시간: $reactionTime ms",
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = informationTextStyle,
                         modifier = Modifier.padding(top = 8.dp),
-                        fontWeight = FontWeight.SemiBold,
                     )
                     Text(
                         "Response: $response",
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = informationTextStyle,
                         modifier = Modifier.padding(top = 8.dp),
-                        fontWeight = FontWeight.SemiBold,
                     )
                 }
             }
@@ -930,138 +917,56 @@ fun GameLevelScreen(
                     rule2Type = rule2Type,
                 )
 
-                // 중앙 이미지 또는 "+" 표시
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(370.dp)
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    when {
-                        isGameOver -> {
-                            Image(
-                                painter = painterResource(id = R.drawable.gameover),
-                                contentDescription = "Game Over",
-                                modifier = Modifier.size(350.dp)
-                            )
-                        }
 
-                        showImage -> {
-                            if (showButtons) {
-                                Text(
-                                    text = "+",
-                                    style = MaterialTheme.typography.headlineLarge,
-                                    fontWeight = FontWeight.Bold
+                    // 중앙 이미지 또는 "+" 표시
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f)
+                            .aspectRatio(1f)    // 정사각형 (1:1 비율), SIZE가 비율로 그려짐
+                            .align(Alignment.CenterHorizontally) // 중앙 정렬
+                    ) {
+                        when {
+                            isGameOver -> {
+                                Image(
+                                    painter = painterResource(id = R.drawable.gameover),
+                                    contentDescription = "Game Over",
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.9f) // 화면 폭의 90%만큼만 사용
+                                        .aspectRatio(1f)    // 정사각형
                                 )
-                            } else {
-                                when (gameId) {
-                                    1, 2, 3 -> Image(
-                                        painter = painterResource(id = currentStimulusResId),
-                                        contentDescription = "Game Stimulus",
-                                        modifier = Modifier.size(350.dp)
-                                    )
-
-                                    else -> Image(
-                                        painter = painterResource(id = R.drawable.sample_game_image),
-                                        contentDescription = "Game Stimulus",
-                                        modifier = Modifier.size(350.dp)
-                                    )
-                                }
                             }
-                        }
-                    }
-                }
-            }
 
-            if (showButtons && !isGameOver) {
-                when (gameId) {
-                    1 -> {
-                        // 색상 원형 버튼 4개
-                        val colorList = listOf(Color.Red, darkGreen, Color.Blue, Color.Yellow)
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 16.dp),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            colorList.forEachIndexed { idx, color ->
-                                Button(
-                                    onClick = {
-                                        val endTime = System.currentTimeMillis()
-                                        val elapsed = endTime - startTime - delayAccordingToLevel
+                            showImage -> {
+                                if (showButtons) {
+                                    Text(
+                                        text = "+",
+                                        style = MaterialTheme.typography.headlineLarge.copy(
+                                            fontSize = 50.sp
+                                        ),
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.Black,
+                                    )
+                                } else {
+                                    when (gameId) {
+                                        1, 2, 3 -> Image(
+                                            painter = painterResource(id = currentStimulusResId),
+                                            contentDescription = "Game Stimulus",
+                                            modifier = Modifier
+                                                .fillMaxWidth(0.9f) // 화면 폭의 90%만큼만 사용
+                                                .aspectRatio(1f)    // 정사각형
+                                        )
 
-                                        if (idx == correctAnswerKey) {
-                                            score += 10
-                                            reactionTime = elapsed.toString()
-                                            response = "Correct!"
-                                        } else {
-                                            response = "Wrong!"
-                                        }
-                                        if (timeLeft > 0 && isRunning) {
-                                            startNewRound()
-                                        } else {
-                                            showButtons = false
-                                            showImage = false
-                                        }
-                                    },
-                                    modifier = Modifier.size(90.dp),
-                                    shape = CircleShape,
-                                    colors = ButtonDefaults.buttonColors(containerColor = color)
-                                ) {}
-                            }
-                        }
-                    }
-
-                    2 -> {
-                        // 버튼 4개: 이미지/색상 구분
-                        val buttonImages = listOf(
-                            R.drawable.button_r,
-                            R.drawable.button_g,
-                            R.drawable.button_b,
-                            R.drawable.button_y
-                        )
-
-                        val buttonColors = listOf(Color.Red, darkGreen, Color.Blue, Color.Yellow)
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 16.dp),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            (0..3).forEach { idx ->
-                                Button(
-                                    onClick = {
-                                        val endTime = System.currentTimeMillis()
-                                        val elapsed = endTime - startTime - delayAccordingToLevel
-                                        if (idx == correctAnswerKey) {
-                                            score += 10
-                                            reactionTime = elapsed.toString()
-                                            response = "Correct!"
-                                        } else {
-                                            response = "Wrong!"
-                                        }
-                                        if (timeLeft > 0 && isRunning) {
-                                            startNewRound()
-                                        } else {
-                                            showButtons = false
-                                            showImage = false
-                                        }
-                                    },
-                                    modifier = Modifier.size(90.dp),
-                                    shape = CircleShape,
-                                    contentPadding = PaddingValues(0.dp), // 버튼 내부 패딩 제거
-                                    colors = if (rule2Type == 1) {
-                                        ButtonDefaults.buttonColors(containerColor = buttonColors[idx])
-                                    } else {
-                                        ButtonDefaults.buttonColors(containerColor = Color.White)
-                                    }
-                                ) {
-                                    if (rule2Type == 0) {
-                                        // 이미지 채움
-                                        Image(
-                                            painter = painterResource(id = buttonImages[idx]),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(90.dp)
+                                        else -> Image(
+                                            painter = painterResource(id = R.drawable.sample_game_image),
+                                            contentDescription = "Game Stimulus",
+                                            modifier = Modifier
+                                                .fillMaxWidth(0.9f) // 화면 폭의 90%만큼만 사용
+                                                .aspectRatio(1f)    // 정사각형
                                         )
                                     }
                                 }
@@ -1069,47 +974,151 @@ fun GameLevelScreen(
                         }
                     }
 
-                    3 -> {
-                        // 가위, 바위, 보 버튼 3개
-                        val buttonImages = listOf(
-                            R.drawable.button_rock,
-                            R.drawable.button_scissors,
-                            R.drawable.button_paper,
-                        )
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 16.dp),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            (0..2).forEach { idx ->
-                                Button(
-                                    onClick = {
-                                        val endTime = System.currentTimeMillis()
-                                        val elapsed = endTime - startTime - delayAccordingToLevel
-                                        if (idx == correctAnswerKey) {
-                                            score += 10
-                                            reactionTime = elapsed.toString()
-                                            response = "Correct!"
-                                        } else {
-                                            response = "Wrong!"
-                                        }
-                                        if (timeLeft > 0 && isRunning) {
-                                            startNewRound()
-                                        } else {
-                                            showButtons = false
-                                            showImage = false
-                                        }
-                                    },
-                                    modifier = Modifier.size(120.dp),
-                                    shape = CircleShape,
-                                    contentPadding = PaddingValues(0.dp) // 버튼 내부 패딩 제거 (이미지 꽉 차게)
+                    if (showButtons && !isGameOver) {
+                        when (gameId) {
+                            1 -> {
+                                // 색상 원형 버튼 4개
+                                val colorList =
+                                    listOf(Color.Red, darkGreen, Color.Blue, Color.Yellow)
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 16.dp),
+                                    horizontalArrangement = Arrangement.SpaceEvenly
                                 ) {
-                                    Image(
-                                        painter = painterResource(id = buttonImages[idx]),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(120.dp)
-                                    )
+                                    colorList.forEachIndexed { idx, color ->
+                                        Button(
+                                            onClick = {
+                                                val endTime = System.currentTimeMillis()
+                                                val elapsed =
+                                                    endTime - startTime - delayAccordingToLevel
+
+                                                if (idx == correctAnswerKey) {
+                                                    score += 10
+                                                    reactionTime = elapsed.toString()
+                                                    response = "Correct!"
+                                                } else {
+                                                    response = "Wrong!"
+                                                }
+                                                if (timeLeft > 0 && isRunning) {
+                                                    startNewRound()
+                                                } else {
+                                                    showButtons = false
+                                                    showImage = false
+                                                }
+                                            },
+                                            modifier = Modifier.size(90.dp),
+                                            shape = CircleShape,
+                                            colors = ButtonDefaults.buttonColors(containerColor = color)
+                                        ) {}
+                                    }
+                                }
+                            }
+
+                            2 -> {
+                                // 버튼 4개: 이미지/색상 구분
+                                val buttonImages = listOf(
+                                    R.drawable.button_r,
+                                    R.drawable.button_g,
+                                    R.drawable.button_b,
+                                    R.drawable.button_y
+                                )
+
+                                val buttonColors =
+                                    listOf(Color.Red, darkGreen, Color.Blue, Color.Yellow)
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 16.dp),
+                                    horizontalArrangement = Arrangement.SpaceEvenly
+                                ) {
+                                    (0..3).forEach { idx ->
+                                        Button(
+                                            onClick = {
+                                                val endTime = System.currentTimeMillis()
+                                                val elapsed =
+                                                    endTime - startTime - delayAccordingToLevel
+                                                if (idx == correctAnswerKey) {
+                                                    score += 10
+                                                    reactionTime = elapsed.toString()
+                                                    response = "Correct!"
+                                                } else {
+                                                    response = "Wrong!"
+                                                }
+                                                if (timeLeft > 0 && isRunning) {
+                                                    startNewRound()
+                                                } else {
+                                                    showButtons = false
+                                                    showImage = false
+                                                }
+                                            },
+                                            modifier = Modifier.size(90.dp),
+                                            shape = CircleShape,
+                                            contentPadding = PaddingValues(0.dp), // 버튼 내부 패딩 제거
+                                            colors = if (rule2Type == 1) {
+                                                ButtonDefaults.buttonColors(containerColor = buttonColors[idx])
+                                            } else {
+                                                ButtonDefaults.buttonColors(containerColor = Color.White)
+                                            }
+                                        ) {
+                                            if (rule2Type == 0) {
+                                                // 이미지 채움
+                                                Image(
+                                                    painter = painterResource(id = buttonImages[idx]),
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(90.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            3 -> {
+                                // 가위, 바위, 보 버튼 3개
+                                val buttonImages = listOf(
+                                    R.drawable.button_rock,
+                                    R.drawable.button_scissors,
+                                    R.drawable.button_paper,
+                                )
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 16.dp),
+                                    horizontalArrangement = Arrangement.SpaceEvenly
+                                ) {
+                                    (0..2).forEach { idx ->
+                                        Button(
+                                            onClick = {
+                                                val endTime = System.currentTimeMillis()
+                                                val elapsed =
+                                                    endTime - startTime - delayAccordingToLevel
+                                                if (idx == correctAnswerKey) {
+                                                    score += 10
+                                                    reactionTime = elapsed.toString()
+                                                    response = "Correct!"
+                                                } else {
+                                                    response = "Wrong!"
+                                                }
+                                                if (timeLeft > 0 && isRunning) {
+                                                    startNewRound()
+                                                } else {
+                                                    showButtons = false
+                                                    showImage = false
+                                                }
+                                            },
+                                            modifier = Modifier.size(120.dp),
+                                            shape = CircleShape,
+                                            contentPadding = PaddingValues(0.dp), // 버튼 내부 패딩 제거 (이미지 꽉 차게)
+                                            colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                                        ) {
+                                            Image(
+                                                painter = painterResource(id = buttonImages[idx]),
+                                                contentDescription = null,
+                                                modifier = Modifier.size(120.dp)
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1134,8 +1143,8 @@ fun GameLevelScreen(
                     } else {
                         Column(
                             modifier = Modifier
-                                .width(320.dp)
-                                .height(320.dp)
+                                .fillMaxWidth(0.8f)
+                                .aspectRatio(1f)    // 정사각형 (1:1 비율), SIZE가 비율로 그려짐
                         ) {
                             for (row in 0..2) {
                                 Row(
@@ -1226,7 +1235,8 @@ fun RuleGrid(
 
     val myRuleTextStyle = TextStyle(
         fontSize = 30.sp,
-        fontWeight = FontWeight.Bold
+        fontWeight = FontWeight.Bold,
+        color = Color.Black,
     )
 
     Column(
